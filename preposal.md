@@ -2,8 +2,10 @@
 
 ## What idea(s) do you have for your final project?
 
-A game
-A webpage?
+A fighting game
+A Personal webpage
+Weather app
+Discord music bot
 
 ## If you plan to collaborate with one or two classmates, what are their names?
 
