@@ -6,6 +6,7 @@ class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  
 
+
     #event
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
@@ -49,5 +50,6 @@ class Commands(commands.Cog):
     #async def list():
     #    pass
 
-def setup(bot):
-    bot.add_cog(Commands(bot))
+async def setup(bot):
+    await bot.add_cog(Commands(bot))
+
