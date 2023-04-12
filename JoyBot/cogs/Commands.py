@@ -5,9 +5,9 @@ import asyncio
 class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  
-
-
-    #event
+    
+    # Event
+    # Bot leaves voice channel after 15 minutes if not used
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
         if not member.id == self.bot.user.id:                       # checks if the bot triggers event
@@ -34,7 +34,8 @@ class Commands(commands.Cog):
             channel = ctx.message.author.voice.channel
             await channel.connect()
         else:
-            await ctx.send("Please join a voice channel to use this command!")
+            await ctx.send("Dush! Please join a voice channel to use this command!")
+        
 
 
     #@commands.command(pass_context = True)

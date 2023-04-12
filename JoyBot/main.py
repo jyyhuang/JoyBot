@@ -1,7 +1,7 @@
-import discord
+import discord # pip install
 from discord.ext import commands
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv # pip install
 
 load_dotenv()
 
@@ -13,7 +13,6 @@ class MyBot(commands.Bot):
 
 	async def setup_hook(self):
 		await self.load_extension("cogs.Commands")
-
 
 JoyBot = MyBot()
 
