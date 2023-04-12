@@ -8,6 +8,7 @@ Weather app
 Discord music bot
 FL studio music plugin
 
+
 ## If you plan to collaborate with one or two classmates, what are their names?
 
 I am working alone
