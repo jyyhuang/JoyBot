@@ -3,6 +3,9 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv # pip install
 
+# Installations Needed:
+# PyNaCL, youtube_dl, discord, dotenv, ffmpeg
+
 load_dotenv()
 
 # Since I am using discord.py v2.0 I had to create a subclass of commands.Bot for setup hook to my cog
