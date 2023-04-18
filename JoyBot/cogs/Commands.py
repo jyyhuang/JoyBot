@@ -1,56 +1,180 @@
 import discord
 from discord.ext import commands
 import asyncio
+import youtube_dl
+
+VOICE_CHANNELS = {}
+queue = {}
+youtube_dl.utils.bug_reports_message = lambda: ''
+
+ytdl_options = {
+    'format': 'bestaudio/best',
+    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
+    'restrictfilenames': True,
+    'noplaylist': True,
+    'nocheckcertificate': True,
+    'ignoreerrors': False,
+    'logtostderr': False,
+    'quiet': True,
+    'no_warnings': True,
+    'default_search': 'auto',
+    'source_address': '0.0.0.0'
+}
+
+ffmpeg_options = {
+    'options': '-vn',
+    "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
+}
+
+ytdl = youtube_dl.YoutubeDL(ytdl_options)
 
 class Commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot  
-    
+        
     # Event
     # Bot leaves voice channel after 15 minutes if not used
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-        if not member.id == self.bot.user.id:                       # checks if the bot triggers event
+
+        # Make sure member is bot
+        if not member.id == self.bot.user.id:
             return
 
-        elif before.channel is None:                                # if None then that means bot was not in a voice channel before
+        # Bot got disconnected
+        if after.channel is None:
+            text_channel = VOICE_CHANNELS.pop(before.channel.id)
+            if text_channel:
+                await text_channel.send("Disconnected! :(")
+
+        # if None then that means bot was not in a voice channel before
+        # Bot is connected
+        elif before.channel is None:                                
             voice = after.channel.guild.voice_client
             time = 0
             while True:
-                await asyncio.sleep(1)                              # sleeps for the time its not active
+                await asyncio.sleep(1)                              
                 time += 1
                 if voice.is_playing() and not voice.is_paused():
                     time = 0
                 if time == 900:
                     await voice.disconnect()
-                if not voice.is_connected:                          # if not connected, break
+                if not voice.is_connected:                          
                     break
-            
+        
 
     #commands
     @commands.command(pass_context = True)
-    async def play(self, ctx):
-        if ctx.author.voice:
+    async def join(self, ctx):
+        channel = ctx.message.author.voice.channel
+        VOICE_CHANNELS[channel.id] = ctx.channel
+        if ctx.voice_client is not None:
+            return await ctx.voice_client.move_to(channel)
+        await channel.connect()
+
+    @commands.command(pass_context = True)
+    async def leave(self, ctx):
+        pass
+
+    @commands.command(pass_context = True)
+    async def play(self, ctx, *, info):
+
+        def check_queue(ctx, id):
+            if queue[id] != {}:
+                voice_client = ctx.guild.voice_client
+                source, title = queue[id].pop(0)
+                voice_client.play(source, after=lambda x=0: check_queue(ctx, ctx.message.guild.id))
+                loop.create_task(ctx.send(f"**Now playing:** {title}"))
+
+        try:
+            voice_channel = ctx.author.voice.channel # checks if user is in voice channel
             channel = ctx.message.author.voice.channel
-            await channel.connect()
+            VOICE_CHANNELS[channel.id] = ctx.channel
+            guild_id = ctx.message.guild.id
+        except AttributeError:
+            return await ctx.send("Dush! Please Join a Channel.") # user is not in a voice channel
+
+        voice_client = ctx.guild.voice_client
+        if not voice_client:
+            await voice_channel.connect()
+            voice_client = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
+
+        loop = asyncio.get_event_loop()
+
+        try:
+            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(info, download=False)) 
+            title = data["title"] # get title
+            song = data["url"] # get url
+            if "entries" in data: # checks for playlist 
+                    data = data["entries"][0] # if its a playlist, we get the first item
+        
+        # If not a url, then searches youtube
+        except Exception as e:
+            search_data = "ytsearch:" + info
+            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(search_data, download=False))
+            #title = data['entries'][0]['formats'][0]['title']
+            song = data['entries'][0]['formats'][0]['url']
+            
+    
+        try:
+            source = discord.FFmpegPCMAudio(source=song,**ffmpeg_options, executable="ffmpeg") # playing the audio
+            if voice_client.is_playing():
+                if guild_id in queue:
+                    queue[guild_id].append((source, title))
+                else:
+                    queue[guild_id] = [(source,title)]
+                if len(queue) >= 1:
+                        await ctx.send(f"{title} added to queue.")
+            else:
+                voice_client.play(source, after=lambda x=0: check_queue(ctx, ctx.message.guild.id))
+                await ctx.send(f"**Now playing:** {title}")
+        except Exception as e:
+            print(e)
+    
+    @commands.command(pass_context = True)
+    async def pause(self, ctx):
+        try:
+            channel = ctx.message.author.voice.channel
+            VOICE_CHANNELS[channel.id] = ctx.channel
+            playing = ctx.voice_client.is_playing()
+            paused = ctx.voice_client.is_paused()
+        except AttributeError:
+            return await ctx.send("Dush! Please Join a Channel.")
+        if paused != True:
+            ctx.voice_client.pause()
         else:
-            await ctx.send("Dush! Please join a voice channel to use this command!")
+            if playing != True:
+                ctx.voice_client.resume()
+            
+
+    @commands.command(pass_context = True)
+    async def stop(self, ctx):
+        try:
+            channel = ctx.message.author.voice.channel
+            VOICE_CHANNELS[channel.id] = ctx.channel
+            if ctx.voice_client.is_playing:
+                ctx.voice_client.stop()
+                queue.clear()
+            await ctx.send("Music has stopped")
+        except AttributeError:
+            return await ctx.send("Dush! Please Join a Channel.")
         
 
+    @commands.command(pass_context = True)
+    async def skip(self, ctx):
+        try:
+            channel = ctx.message.author.voice.channel
+            VOICE_CHANNELS[channel.id] = ctx.channel
+            if ctx.voice_client.is_playing:
+                ctx.voice_client.stop()
+        except AttributeError:
+            return await ctx.send("Dush! Please Join a Channel.")
+        
 
     #@commands.command(pass_context = True)
-    #async def pause():
-    #    pass
-    #@commands.command(pass_context = True)
-    #async def stop():
-    #    pass
-    #@commands.command(pass_context = True)
-    #async def skip():
-    #    pass
-    #@commands.command(pass_context = True)
-    #async def list():
-    #    pass
+    #async def list(self, ctx):
+        #for i in queue:
+            #await ctx.send(f"{queue[i]}")
 
 async def setup(bot):
     await bot.add_cog(Commands(bot))
-
