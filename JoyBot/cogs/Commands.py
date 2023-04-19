@@ -87,12 +87,15 @@ class Commands(commands.Cog):
     async def play(self, ctx, *, info):
 
         def check_queue(ctx, id):
-            if queue[id] != {}:
-                voice_client = ctx.guild.voice_client
-                source, title = queue[id].pop(0)
-                voice_client.play(source, after=lambda x=0: check_queue(ctx, ctx.message.guild.id))
-                loop.create_task(ctx.send(f"**Now playing:** {title}"))
-
+            try:
+                if queue[id] != {}:
+                    voice_client = ctx.guild.voice_client
+                    source, title = queue[id].pop(0)
+                    voice_client.play(source, after=lambda x=0: check_queue(ctx, ctx.message.guild.id))
+                    loop.create_task(ctx.send(f"**Now playing:** {title}"))
+            except Exception as e:
+                print(e)
+                
         try:
             voice_channel = ctx.author.voice.channel # checks if user is in voice channel
             channel = ctx.message.author.voice.channel
