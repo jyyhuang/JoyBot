@@ -66,15 +66,22 @@ class Commands(commands.Cog):
     #commands
     @commands.command(pass_context = True)
     async def join(self, ctx):
-        channel = ctx.message.author.voice.channel
-        VOICE_CHANNELS[channel.id] = ctx.channel
-        if ctx.voice_client is not None:
-            return await ctx.voice_client.move_to(channel)
-        await channel.connect()
+        if ctx.author.voice:
+            channel = ctx.message.author.voice.channel
+            VOICE_CHANNELS[channel.id] = ctx.channel
+            if ctx.voice_client is not None:
+                return await ctx.voice_client.move_to(channel)
+            await channel.connect()
+        else:
+            await ctx.send("Dush! Please Join a Channel.")
 
     @commands.command(pass_context = True)
     async def leave(self, ctx):
-        pass
+        if ctx.voice_client:
+            channel = ctx.guild.voice_client
+            await channel.disconnect()
+        else:
+            await ctx.send("Dush! Please Join a Channel.")
 
     @commands.command(pass_context = True)
     async def play(self, ctx, *, info):
@@ -102,20 +109,19 @@ class Commands(commands.Cog):
         loop = asyncio.get_event_loop()
 
         try:
-            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(info, download=False)) 
-            title = data["title"] # get title
+            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(info, download=False))
             song = data["url"] # get url
-            if "entries" in data: # checks for playlist 
-                    data = data["entries"][0] # if its a playlist, we get the first item
+            title = data["title"] # get title
+            if "entries" in data:
+                data = data["entries"][0]
         
         # If not a url, then searches youtube
         except Exception as e:
             search_data = "ytsearch:" + info
             data = await loop.run_in_executor(None, lambda: ytdl.extract_info(search_data, download=False))
-            #title = data['entries'][0]['formats'][0]['title']
-            song = data['entries'][0]['formats'][0]['url']
+            song = data['entries'][0]['url']
+            title = data['entries'][0]['title']
             
-    
         try:
             source = discord.FFmpegPCMAudio(source=song,**ffmpeg_options, executable="ffmpeg") # playing the audio
             if voice_client.is_playing():
@@ -124,10 +130,11 @@ class Commands(commands.Cog):
                 else:
                     queue[guild_id] = [(source,title)]
                 if len(queue) >= 1:
-                        await ctx.send(f"{title} added to queue.")
+                        await ctx.send(f"*{title}* **added to queue**")
             else:
                 voice_client.play(source, after=lambda x=0: check_queue(ctx, ctx.message.guild.id))
-                await ctx.send(f"**Now playing:** {title}")
+                await ctx.send(f"**Now playing:** *{title}*")
+        
         except Exception as e:
             print(e)
     
@@ -171,10 +178,14 @@ class Commands(commands.Cog):
             return await ctx.send("Dush! Please Join a Channel.")
         
 
-    #@commands.command(pass_context = True)
-    #async def list(self, ctx):
-        #for i in queue:
-            #await ctx.send(f"{queue[i]}")
+    @commands.command(pass_context = True)
+    async def list(self, ctx):
+        counter = 1
+        await ctx.send("**IN QUEUE:**")
+        for values in queue.values():
+            for value in values:
+                await ctx.send(f"{counter}. **{value[1]}**")
+                counter += 1
 
 async def setup(bot):
     await bot.add_cog(Commands(bot))

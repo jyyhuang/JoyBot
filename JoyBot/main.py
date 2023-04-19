@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv # pip install
 
 # Installations Needed:
-# PyNaCL, youtube_dl, discord, dotenv, ffmpeg
+# PyNaCL, youtube_dl, discord.py, dotenv, ffmpeg
 
 load_dotenv()
 
@@ -12,7 +12,7 @@ load_dotenv()
 # super().__init__ calls class commands.Bot to pass in command_prefix and intents
 class MyBot(commands.Bot): 			
 	def __init__(self):
-		super().__init__(command_prefix = "/", intents = discord.Intents.all())		
+		super().__init__(command_prefix = ".", intents = discord.Intents.all())		
 
 	async def setup_hook(self):
 		await self.load_extension("cogs.Commands")
