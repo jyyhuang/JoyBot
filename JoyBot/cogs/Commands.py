@@ -63,7 +63,8 @@ class Commands(commands.Cog):
                     break
         
 
-    #commands
+    # Commands
+    # joins channel
     @commands.command(pass_context = True)
     async def join(self, ctx):
         if ctx.author.voice:
@@ -75,6 +76,7 @@ class Commands(commands.Cog):
         else:
             await ctx.send("Dush! Please Join a Channel.")
 
+    # leaves channel
     @commands.command(pass_context = True)
     async def leave(self, ctx):
         if ctx.voice_client:
@@ -83,9 +85,11 @@ class Commands(commands.Cog):
         else:
             await ctx.send("Dush! Please Join a Channel.")
 
+    # play music
     @commands.command(pass_context = True)
     async def play(self, ctx, *, info):
-
+        
+        # check queue function
         def check_queue(ctx, id):
             try:
                 if queue[id] != {}:
@@ -95,9 +99,12 @@ class Commands(commands.Cog):
                     loop.create_task(ctx.send(f"**Now playing:** {title}"))
             except Exception as e:
                 print(e)
-                
+        
+        # checks if user is in voice channel
+        # VOICE_CHANNELS is the id of channel where message was sent
+        # Dict makes sure bot sends message to that channel only
         try:
-            voice_channel = ctx.author.voice.channel # checks if user is in voice channel
+            voice_channel = ctx.author.voice.channel
             channel = ctx.message.author.voice.channel
             VOICE_CHANNELS[channel.id] = ctx.channel
             guild_id = ctx.message.guild.id
@@ -109,8 +116,10 @@ class Commands(commands.Cog):
             await voice_channel.connect()
             voice_client = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
 
+        # listens for events
         loop = asyncio.get_event_loop()
-
+        
+        # url
         try:
             data = await loop.run_in_executor(None, lambda: ytdl.extract_info(info, download=False))
             song = data["url"] # get url
@@ -141,6 +150,7 @@ class Commands(commands.Cog):
         except Exception as e:
             print(e)
     
+    # pause song
     @commands.command(pass_context = True)
     async def pause(self, ctx):
         try:
@@ -156,7 +166,7 @@ class Commands(commands.Cog):
             if playing != True:
                 ctx.voice_client.resume()
             
-
+    # stops song and clears queue
     @commands.command(pass_context = True)
     async def stop(self, ctx):
         try:
@@ -169,7 +179,7 @@ class Commands(commands.Cog):
         except AttributeError:
             return await ctx.send("Dush! Please Join a Channel.")
         
-
+    # skip
     @commands.command(pass_context = True)
     async def skip(self, ctx):
         try:
@@ -180,7 +190,7 @@ class Commands(commands.Cog):
         except AttributeError:
             return await ctx.send("Dush! Please Join a Channel.")
         
-
+    # lists all songs in queue
     @commands.command(pass_context = True)
     async def list(self, ctx):
         counter = 1
