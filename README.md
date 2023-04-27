@@ -9,4 +9,4 @@ Some difficulties that I faced where trying to get both urls and youtube search 
 
 # Citation
 I used this tutorial to help me grasp the discord module and write code: 
-- https://www.youtube.com/playlist?list=PL-7Dfw57ZZVRB4N7VWPjmT0Q-2FIMNBMP
+- [Youtube Link](https://www.youtube.com/playlist?list=PL-7Dfw57ZZVRB4N7VWPjmT0Q-2FIMNBMP)
