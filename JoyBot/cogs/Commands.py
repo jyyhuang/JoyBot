@@ -61,7 +61,7 @@ class Commands(commands.Cog):
                     await voice.disconnect()
                 if not voice.is_connected:                          
                     break
-        
+
 
     # Commands
     # joins channel
