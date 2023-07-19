@@ -1,11 +1,11 @@
 import discord
 from discord.ext import commands
 import asyncio
-import youtube_dl
+import yt_dlp
 
 VOICE_CHANNELS = {}
 queue = {}
-youtube_dl.utils.bug_reports_message = lambda: ''
+yt_dlp.utils.bug_reports_message = lambda: ''
 
 ytdl_options = {
     'format': 'bestaudio/best',
@@ -26,7 +26,7 @@ ffmpeg_options = {
     "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
 }
 
-ytdl = youtube_dl.YoutubeDL(ytdl_options)
+ytdl = yt_dlp.YoutubeDL(ytdl_options)
 
 class Commands(commands.Cog):
     def __init__(self, bot):
@@ -133,8 +133,10 @@ class Commands(commands.Cog):
             data = await loop.run_in_executor(None, lambda: ytdl.extract_info(search_data, download=False))
             song = data['entries'][0]['url']
             title = data['entries'][0]['title']
+
             
         try:
+            print(title)
             source = discord.FFmpegPCMAudio(source=song,**ffmpeg_options, executable="ffmpeg") # playing the audio
             if voice_client.is_playing():
                 if guild_id in queue:
@@ -149,7 +151,6 @@ class Commands(commands.Cog):
         
         except Exception as e:
             print(e)
-    
     # pause song
     @commands.command(pass_context = True)
     async def pause(self, ctx):
