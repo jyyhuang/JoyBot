@@ -7,6 +7,5 @@ Discord music bot with commands: join, leave, play, pause, stop, skip, and list.
 
 
 # Resources
-
-Youtube-dl Documentation:
+* [Discord.py](https://discordpy.readthedocs.io/en/stable/)
 * [Youtube-dl](https://github.com/ytdl-org/youtube-dl/blob/master/README.md)
