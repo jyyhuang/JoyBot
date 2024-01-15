@@ -1,4 +1,3 @@
-# CIS1051-final-project
 # JoyBot
 Discord music bot with commands: join, leave, play, pause, stop, skip, and list.
 - prefix used: . (.play)
