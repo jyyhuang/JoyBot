@@ -1,6 +1,7 @@
 # JoyBot
 Discord music bot with commands: join, leave, play, pause, stop, skip, and list.
 - prefix used: .
+    example: .play
 - Play command is usable with both urls and youtube search.
 - Play command also acts like a queue
 
