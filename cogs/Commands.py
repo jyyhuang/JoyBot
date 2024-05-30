@@ -131,22 +131,13 @@ class Commands(commands.Cog):
 
         # url
         async def extract_info(info):
-            try:
-                data = await loop.run_in_executor(
-                    self.executor, lambda: ytdl.extract_info(info, download=False)
-                )
-                if 'entries' in data:
-                    return data["entries"]
-                else:
-                    return [data]
-            # If not a url, then searches youtube
-            except Exception as e:
-                search_data = "ytsearch:" + info
-                data = await loop.run_in_executor(
-                    self.executor,
-                    lambda: ytdl.extract_info(search_data, download=False),
-                )
-                return data["entries"]  # Playlist
+            data = await loop.run_in_executor(
+                self.executor, lambda: ytdl.extract_info(info, download=False)
+            )
+            if "entries" in data:
+                return data["entries"]
+            else:
+                return [data]
 
         async def play_song(ctx, voice_client, guild_id, url, title):
 
@@ -184,6 +175,9 @@ class Commands(commands.Cog):
                 title = song["title"]
 
                 tasks.append(play_song(ctx, voice_client, guild_id, url, title))
+
+                if len(tasks) >= 20:
+                    break
             else:
                 await ctx.send("A song is unavailable and will be skipped. Sowwy :/")
 
